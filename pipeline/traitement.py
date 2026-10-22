@@ -121,6 +121,14 @@ def caracteristiques(points: dict, hauteur: np.ndarray, etiquettes: np.ndarray, 
     debuts = np.searchsorted(lab_s, ids)
     fins = np.searchsorted(lab_s, ids, side="right")
 
+    # transparence du houppier (acquisition hivernale) : part des points sol sous chaque houppier
+    n_lab = int(etiquettes.max()) + 1
+    sol_sous = np.bincount(lab[(points["classe"] == SOL) & (lab > 0)], minlength=n_lab)
+    veg_sous = np.bincount(lab[veg & (lab > 0)], minlength=n_lab)
+    dernier = points["retour"] == points["nb_retours"]
+    int_dernier = np.bincount(lab[veg & dernier & (lab > 0)], weights=points["intensite"][veg & dernier & (lab > 0)].astype(float), minlength=n_lab)
+    n_dernier = np.bincount(lab[veg & dernier & (lab > 0)], minlength=n_lab)
+
     objets = ndi.find_objects(etiquettes)
     res = {}
     for i, (d, f) in zip(ids, zip(debuts, fins)):
@@ -171,6 +179,11 @@ def caracteristiques(points: dict, hauteur: np.ndarray, etiquettes: np.ndarray, 
             "part_uniques": float((nbr_s[d:f] == 1).mean()),
             "retours_moy": float(nbr_s[d:f].mean()),
             "volume": float(hm.sum() * grille.res**2),
+            "transparence": float(sol_sous[i] / max(sol_sous[i] + veg_sous[i], 1)),
+            "int_derniers": float(int_dernier[i] / max(n_dernier[i], 1)),
+            "asymetrie": float(((h - h.mean()) ** 3).mean() / max(h.std(), 1e-3) ** 3),
+            "aplatissement": float(((h - h.mean()) ** 4).mean() / max(h.std(), 1e-3) ** 4),
+            "part_haut": float((h > 0.5 * hmax).mean()),
         }
     log.info("%d arbres avec indicateurs LiDAR", len(res))
     return res

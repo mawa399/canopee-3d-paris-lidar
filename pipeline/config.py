@@ -23,7 +23,7 @@ DISTANCE_MIN_CIMES = 3.0  # distance minimale entre deux cimes (m)
 SURFACE_MIN_HOUPPIER = 4.0  # m²
 
 # Apprentissage
-MIN_ECHANTILLONS_GENRE = 25   # en dessous, le genre est regroupé dans « Autre »
+MIN_ECHANTILLONS_GENRE = 40   # en dessous, le genre est regroupé dans « Autre »
 TAILLE_BLOC_VALIDATION = 150  # m : blocs spatiaux pour la validation croisée
 
 # Dossiers

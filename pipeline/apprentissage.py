@@ -17,7 +17,8 @@ WGS84_VERS_L93 = Transformer.from_crs(4326, 2154, always_xy=True)
 
 VARIABLES = ["hauteur", "h_p90", "h_p75", "h_p50", "h_p25", "h_p10", "h_moy", "h_ecart", "rapport_base",
              "entropie", "surface", "diametre", "allongement", "compacite", "densite", "int_moy",
-             "int_ecart", "int_p90", "part_premiers", "part_uniques", "retours_moy", "volume"]
+             "int_ecart", "int_p90", "part_premiers", "part_uniques", "retours_moy", "volume",
+             "transparence", "int_derniers", "asymetrie", "aplatissement", "part_haut"]
 
 NOMS_VARIABLES = {
     "hauteur": "Hauteur", "h_p90": "Hauteur P90", "h_p75": "Hauteur P75", "h_p50": "Hauteur médiane",
@@ -27,6 +28,8 @@ NOMS_VARIABLES = {
     "compacite": "Compacité", "densite": "Densité de points", "int_moy": "Intensité moyenne",
     "int_ecart": "Dispersion de l'intensité", "int_p90": "Intensité P90", "part_premiers": "Part de premiers retours",
     "part_uniques": "Part de retours uniques", "retours_moy": "Nombre moyen de retours", "volume": "Volume du houppier",
+    "transparence": "Transparence hivernale du houppier", "int_derniers": "Intensité des derniers retours",
+    "asymetrie": "Asymétrie verticale", "aplatissement": "Aplatissement vertical", "part_haut": "Part de points dans la moitié haute",
 }
 
 
