@@ -15,10 +15,32 @@ log = logging.getLogger(__name__)
 L93_VERS_WGS84 = Transformer.from_crs(2154, 4326, always_xy=True)
 
 
+def _couches_lidar_du_catalogue() -> list[str]:
+    """Liste les couches du WFS IGN dont le nom évoque le LiDAR HD (au cas où les noms connus changent)."""
+    try:
+        r = requests.get(WFS_IGN, params={"SERVICE": "WFS", "VERSION": "2.0.0", "REQUEST": "GetCapabilities"}, timeout=90)
+        r.raise_for_status()
+    except Exception as exc:
+        log.warning("Catalogue WFS indisponible : %s", exc)
+        return []
+    import re
+    noms = re.findall(r"<(?:wfs:)?Name>([^<]+)</(?:wfs:)?Name>", r.text)
+    lidar = [n for n in noms if re.search(r"lidar|nuage|nualid", n, re.I)]
+    log.info("Couches LiDAR du catalogue WFS : %s", lidar)
+    return lidar
+
+
 def lister_dalles() -> list[dict]:
     """Interroge le tableau d'assemblage LiDAR HD (WFS IGN) et renvoie les dalles qui couvrent la zone."""
-    bbox = f"{ZONE['xmin']},{ZONE['ymin']},{ZONE['xmax']},{ZONE['ymax']},urn:ogc:def:crs:EPSG::2154"
-    for couche in COUCHES_DALLES:
+    lon0, lat0 = L93_VERS_WGS84.transform(ZONE["xmin"], ZONE["ymin"])
+    lon1, lat1 = L93_VERS_WGS84.transform(ZONE["xmax"], ZONE["ymax"])
+    emprises = [
+        f"{ZONE['xmin']},{ZONE['ymin']},{ZONE['xmax']},{ZONE['ymax']},urn:ogc:def:crs:EPSG::2154",
+        f"{lat0},{lon0},{lat1},{lon1},urn:ogc:def:crs:EPSG::4326",
+    ]
+    couches = COUCHES_DALLES + [c for c in _couches_lidar_du_catalogue() if c not in COUCHES_DALLES]
+    essais = [(c, b) for c in couches for b in emprises]
+    for couche, bbox in essais:
         params = {
             "SERVICE": "WFS", "VERSION": "2.0.0", "REQUEST": "GetFeature",
             "TYPENAMES": couche, "OUTPUTFORMAT": "application/json", "BBOX": bbox, "COUNT": 50,
@@ -28,8 +50,10 @@ def lister_dalles() -> list[dict]:
             r.raise_for_status()
             entites = r.json().get("features", [])
         except Exception as exc:  # couche absente ou format inattendu : on essaie la suivante
-            log.warning("Couche %s indisponible : %s", couche, exc)
+            log.warning("Couche %s indisponible : %s", couche, str(exc)[:120])
             continue
+        if entites:
+            log.info("Couche %s : attributs %s", couche, entites[0].get("properties"))
         dalles = []
         for f in entites:
             p = f.get("properties", {})
