@@ -181,7 +181,16 @@ const AGOL_ARBRES = "https://services6.arcgis.com/XgSVk5L0bMP2HZ15/arcgis/rest/s
 const AGOL_NUAGE = "https://tiles.arcgis.com/tiles/XgSVk5L0bMP2HZ15/arcgis/rest/services/Nuage_Vegetation_ButtesChaumont_slpk/SceneServer";
 
 const rendusNuage: Record<string, any> = {
-  rgb: { type: "point-cloud-rgb", field: "RGB", pointsPerInch: 25 },
+  intensite: {
+    type: "point-cloud-stretch",
+    field: "INTENSITY",
+    pointsPerInch: 25,
+    stops: [
+      { value: 0, color: "#1b1f24" },
+      { value: 800, color: "#7d8a7a" },
+      { value: 2000, color: "#f1f5e9" },
+    ],
+  },
   hauteur: {
     type: "point-cloud-stretch",
     field: "ELEVATION",
@@ -210,7 +219,7 @@ const nuageAgol = new PointCloudLayer({
   url: AGOL_NUAGE,
   title: "Nuage de points LiDAR HD (ArcGIS Online)",
   visible: false,
-  renderer: rendusNuage.rgb,
+  renderer: rendusNuage.classe,
 });
 
 const arbresAgol = new FeatureLayer({
@@ -356,7 +365,7 @@ $("c-py-arbres").textContent = z.nb_arbres_detectes.toLocaleString("fr-FR");
 $("c-py-apparies").textContent = z.nb_apparies.toLocaleString("fr-FR");
 $("c-py-classes").textContent = `${classes.length} genres`;
 $("c-py-precision").textContent = pct(metriques.genre.precision_globale);
-$("c-py-r2").textContent = nf.format(metriques.circonference.r2);
+$("c-py-r2").textContent = metriques.circonference.r2.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
 
 // ---------------------------------------------------------------------------
 // Panneau : le modèle

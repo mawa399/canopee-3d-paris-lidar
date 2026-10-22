@@ -286,3 +286,8 @@ calcite-label {
   gap: 0.35rem;
   font-size: 0.8rem;
 }
+
+/* l'attribut hidden doit l'emporter sur les display des listes et blocs */
+[hidden] {
+  display: none !important;
+}
