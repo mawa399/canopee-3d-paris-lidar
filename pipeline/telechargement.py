@@ -71,37 +71,42 @@ def lister_dalles() -> list[dict]:
 
 
 def charger_points(dalles: list[dict]) -> dict[str, np.ndarray]:
-    """Lit uniquement les points de la zone dans chaque dalle COPC (lecture partielle par requêtes HTTP)."""
+    """Télécharge chaque dalle LiDAR HD et ne garde que les points de la zone d'étude."""
     cache = CACHE / "points.npz"
     if cache.exists():
         log.info("Nuage de points lu depuis le cache")
         return dict(np.load(cache))
 
-    bornes = laspy.copc.Bounds(
-        mins=np.array([ZONE["xmin"], ZONE["ymin"]], dtype=float),
-        maxs=np.array([ZONE["xmax"], ZONE["ymax"]], dtype=float),
-    )
     morceaux = []
+    CACHE.mkdir(parents=True, exist_ok=True)
     for d in dalles:
-        log.info("Lecture COPC de %s", d["nom"])
-        with laspy.CopcReader.open(d["url"]) as lecteur:
-            pts = lecteur.query(bounds=bornes)
-        if len(pts) == 0:
-            continue
-        morceaux.append({
-            "x": np.asarray(pts.x, dtype=np.float64),
-            "y": np.asarray(pts.y, dtype=np.float64),
-            "z": np.asarray(pts.z, dtype=np.float32),
-            "classe": np.asarray(pts.classification, dtype=np.uint8),
-            "intensite": np.asarray(pts.intensity, dtype=np.uint16),
-            "retour": np.asarray(pts.return_number, dtype=np.uint8),
-            "nb_retours": np.asarray(pts.number_of_returns, dtype=np.uint8),
-        })
-        log.info("  %d points dans la zone", len(pts))
+        fichier = CACHE / d["nom"]
+        log.info("Téléchargement de %s", d["nom"])
+        with requests.get(d["url"], stream=True, timeout=300) as r:
+            r.raise_for_status()
+            with open(fichier, "wb") as f:
+                for bloc in r.iter_content(chunk_size=1 << 22):
+                    f.write(bloc)
+        log.info("  %.0f Mo", fichier.stat().st_size / 1e6)
+        with laspy.open(fichier) as lecteur:
+            for pts in lecteur.chunk_iterator(5_000_000):
+                x, y = np.asarray(pts.x), np.asarray(pts.y)
+                garde = (x >= ZONE["xmin"]) & (x < ZONE["xmax"]) & (y >= ZONE["ymin"]) & (y < ZONE["ymax"])
+                if not garde.any():
+                    continue
+                morceaux.append({
+                    "x": x[garde].astype(np.float64),
+                    "y": y[garde].astype(np.float64),
+                    "z": np.asarray(pts.z)[garde].astype(np.float32),
+                    "classe": np.asarray(pts.classification)[garde].astype(np.uint8),
+                    "intensite": np.asarray(pts.intensity)[garde].astype(np.uint16),
+                    "retour": np.asarray(pts.return_number)[garde].astype(np.uint8),
+                    "nb_retours": np.asarray(pts.number_of_returns)[garde].astype(np.uint8),
+                })
+        fichier.unlink()  # on ne garde que les points de la zone
     if not morceaux:
         raise RuntimeError("Aucun point LiDAR dans la zone")
     points = {k: np.concatenate([m[k] for m in morceaux]) for k in morceaux[0]}
-    CACHE.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(cache, **points)
     log.info("Total : %d points", len(points["x"]))
     return points
