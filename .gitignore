@@ -5,3 +5,4 @@ cache_test/
 sortie_test/
 __pycache__/
 .DS_Store
+public/data/

@@ -74,7 +74,7 @@ def _blocs(arbres, ids):
 
 def entrainer(arbres: dict[int, dict], paires: dict[int, dict]):
     """Classification du genre et régression de la circonférence, validées par blocs spatiaux."""
-    metriques: dict = {}
+    metriques: dict = {"n_variables": len(VARIABLES)}
 
     # --- Genre -----------------------------------------------------------------------------
     ids = [i for i in paires if paires[i]["nb_dans_houppier"] <= 2]  # houppiers « purs »

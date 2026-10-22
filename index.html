@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Canopée 3D de Paris</title>
+    <meta
+      name="description"
+      content="Arbres des Buttes-Chaumont détectés dans le LiDAR HD de l'IGN, genre prédit par machine learning et validé avec l'inventaire de la Ville de Paris. ArcGIS Maps SDK for JavaScript."
+    />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23101814'/><circle cx='16' cy='12' r='8' fill='%235fbf7a'/><rect x='14.5' y='17' width='3' height='10' fill='%23c9a46b'/></svg>" />
+  </head>
+  <body class="calcite-mode-dark">
+    <calcite-shell content-behind>
+      <header slot="header" class="entete">
+        <div class="titre">
+          <span class="logo" aria-hidden="true"></span>
+          <div>
+            <h1>Canopée 3D de Paris</h1>
+            <p id="sous-titre">LiDAR HD IGN · machine learning · inventaire de la Ville de Paris</p>
+          </div>
+        </div>
+        <calcite-link href="https://github.com/mawa399/canopee-3d-paris-lidar" target="_blank" icon-start="code">Code source</calcite-link>
+      </header>
+
+      <calcite-shell-panel slot="panel-start" width="m" display-mode="float-content">
+        <calcite-panel>
+          <calcite-block heading="La zone" expanded icon-start="analysis">
+            <div class="chiffres">
+              <div><span id="k-arbres">–</span><small>arbres détectés</small></div>
+              <div><span id="k-canopee">–</span><small>de canopée</small></div>
+              <div><span id="k-hauteur">–</span><small>hauteur moyenne</small></div>
+              <div><span id="k-points">–</span><small>points LiDAR</small></div>
+            </div>
+            <p class="aide" id="texte-zone"></p>
+          </calcite-block>
+
+          <calcite-block heading="Afficher" expanded icon-start="layers">
+            <calcite-segmented-control id="mode" width="full" scale="s">
+              <calcite-segmented-control-item value="realiste" checked>Réaliste</calcite-segmented-control-item>
+              <calcite-segmented-control-item value="genre">Par genre</calcite-segmented-control-item>
+              <calcite-segmented-control-item value="verif">Vérification</calcite-segmented-control-item>
+            </calcite-segmented-control>
+            <ul id="legende-verif" class="legende" hidden>
+              <li><i style="background:#3fbf6f"></i>Genre prédit = genre de l'inventaire</li>
+              <li><i style="background:#e5484d"></i>Genre prédit ≠ inventaire</li>
+              <li><i style="background:#8a94a0"></i>Arbre absent de l'inventaire</li>
+            </ul>
+            <calcite-label layout="inline-space-between">
+              Houppiers (emprise au sol)
+              <calcite-switch id="sw-houppiers"></calcite-switch>
+            </calcite-label>
+            <calcite-label layout="inline-space-between">
+              Seulement les arbres de l'inventaire
+              <calcite-switch id="sw-inventaire"></calcite-switch>
+            </calcite-label>
+          </calcite-block>
+
+          <calcite-block heading="Filtrer" expanded icon-start="filter">
+            <calcite-label>
+              Hauteur (m)
+              <calcite-slider id="sl-hauteur" min="0" max="40" min-value="0" max-value="40" step="1" label-handles ticks="10"></calcite-slider>
+            </calcite-label>
+            <p class="sous-titre">Genre prédit <span id="compte-visible" class="compte"></span></p>
+            <div id="genres" class="genres"></div>
+          </calcite-block>
+
+          <calcite-block heading="Le modèle de machine learning" icon-start="graph-bar">
+            <div id="modele"></div>
+          </calcite-block>
+
+          <footer class="credits">
+            Nuage de points : LiDAR HD © IGN (licence ouverte) · Arbres : « Les arbres », Ville de Paris (ODbL) ·
+            Imagerie et terrain : Esri · Réalisé avec ArcGIS Maps SDK for JavaScript — Mawa Diaw
+          </footer>
+        </calcite-panel>
+      </calcite-shell-panel>
+
+      <calcite-shell-panel slot="panel-end" width="m" display-mode="float-content" id="panneau-arbre" collapsed>
+        <calcite-panel id="fiche" heading="Arbre" closable>
+          <div id="fiche-contenu" class="fiche"></div>
+        </calcite-panel>
+      </calcite-shell-panel>
+
+      <div id="vue"></div>
+    </calcite-shell>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

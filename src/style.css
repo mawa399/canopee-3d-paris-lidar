@@ -1,0 +1,255 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #0f1412;
+  font-family: var(--calcite-font-family, "Avenir Next", system-ui, sans-serif);
+}
+#vue {
+  position: absolute;
+  inset: 0;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: rgba(15, 20, 18, 0.92);
+  border-bottom: 1px solid #263029;
+  color: #eef3ef;
+}
+.titre {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.titre h1 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.titre p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #9fb0a5;
+}
+.logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 50% 38%, #5fbf7a 0 8px, transparent 8.5px),
+    linear-gradient(#c9a46b, #c9a46b) 12.5px 16px / 3px 10px no-repeat,
+    #1a231e;
+}
+
+calcite-panel,
+calcite-block {
+  overflow-x: hidden;
+}
+.aide {
+  margin: 0.6rem 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--calcite-color-text-3);
+}
+.aide b {
+  color: var(--calcite-color-text-1);
+  font-weight: 600;
+}
+.note {
+  padding: 0.5rem 0.6rem;
+  border-left: 3px solid #e8b04a;
+  background: var(--calcite-color-foreground-2);
+  border-radius: 0 4px 4px 0;
+}
+.sous-titre {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--calcite-color-text-2);
+}
+.compte {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: var(--calcite-color-text-3);
+}
+
+.chiffres {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.4rem;
+}
+.chiffres div {
+  display: flex;
+  flex-direction: column;
+  padding: 0.55rem 0.5rem;
+  border-radius: 6px;
+  background: var(--calcite-color-foreground-2);
+}
+.chiffres span {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--calcite-color-text-1);
+  font-variant-numeric: tabular-nums;
+}
+.chiffres small {
+  font-size: 0.7rem;
+  color: var(--calcite-color-text-3);
+}
+
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.genres calcite-chip:not([selected]) {
+  opacity: 0.45;
+}
+.genres b {
+  margin-left: 0.25rem;
+  font-weight: 500;
+  color: var(--calcite-color-text-3);
+}
+.pastille {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 0.35rem;
+  border-radius: 50%;
+  vertical-align: baseline;
+}
+
+.legende {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--calcite-color-text-2);
+}
+.legende li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.legende i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+calcite-label {
+  margin-top: 0.6rem;
+}
+
+.ligne {
+  display: grid;
+  grid-template-columns: 9.5rem 1fr 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+  font-size: 0.76rem;
+  color: var(--calcite-color-text-2);
+}
+.ligne span:first-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ligne b {
+  text-align: right;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.barre {
+  height: 7px;
+  border-radius: 4px;
+  background: var(--calcite-color-foreground-3);
+  overflow: hidden;
+}
+.barre i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.matrice {
+  border-collapse: collapse;
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--calcite-color-text-1);
+}
+.matrice th {
+  padding: 2px 3px;
+  font-weight: 500;
+  color: var(--calcite-color-text-3);
+}
+.matrice td {
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  border: 1px solid var(--calcite-color-background);
+}
+
+.fiche {
+  padding: 0 1rem 1rem;
+  font-size: 0.85rem;
+  color: var(--calcite-color-text-2);
+}
+.genre-pred {
+  margin: 0.2rem 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--calcite-color-text-1);
+}
+.genre-pred small {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--calcite-color-text-3);
+}
+.ok {
+  color: #3fbf6f;
+}
+.ko {
+  color: #e5484d;
+}
+.neutre {
+  color: var(--calcite-color-text-3);
+}
+.mesures {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.mesures th,
+.mesures td {
+  padding: 0.35rem 0.25rem;
+  text-align: left;
+  border-bottom: 1px solid var(--calcite-color-border-3);
+}
+.mesures th {
+  font-weight: 500;
+  color: var(--calcite-color-text-3);
+}
+
+.credits {
+  padding: 0.75rem 1rem;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--calcite-color-text-3);
+}
+
+@media (max-width: 600px) {
+  .titre p,
+  .entete calcite-link {
+    display: none;
+  }
+}

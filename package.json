@@ -1,0 +1,22 @@
+{
+  "name": "canopee-3d-paris-lidar",
+  "version": "1.0.0",
+  "description": "LiDAR HD de l'IGN + inventaire des arbres de Paris : segmentation des arbres, genre prédit par machine learning, visualisation 3D — ArcGIS Maps SDK for JavaScript",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "author": "Mawa Diaw",
+  "license": "MIT",
+  "dependencies": {
+    "@arcgis/core": "^5.1.27",
+    "@esri/calcite-components": "5.1"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  },
+  "private": true,
+  "type": "module"
+}
