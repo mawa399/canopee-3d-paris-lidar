@@ -1,0 +1,100 @@
+"""Téléchargement des données : nuage de points LiDAR HD (IGN) et inventaire des arbres (Ville de Paris)."""
+from __future__ import annotations
+
+import json
+import logging
+
+import laspy
+import numpy as np
+import requests
+from pyproj import Transformer
+
+from config import API_ARBRES, CACHE, COUCHES_DALLES, WFS_IGN, ZONE
+
+log = logging.getLogger(__name__)
+L93_VERS_WGS84 = Transformer.from_crs(2154, 4326, always_xy=True)
+
+
+def lister_dalles() -> list[dict]:
+    """Interroge le tableau d'assemblage LiDAR HD (WFS IGN) et renvoie les dalles qui couvrent la zone."""
+    bbox = f"{ZONE['xmin']},{ZONE['ymin']},{ZONE['xmax']},{ZONE['ymax']},urn:ogc:def:crs:EPSG::2154"
+    for couche in COUCHES_DALLES:
+        params = {
+            "SERVICE": "WFS", "VERSION": "2.0.0", "REQUEST": "GetFeature",
+            "TYPENAMES": couche, "OUTPUTFORMAT": "application/json", "BBOX": bbox, "COUNT": 50,
+        }
+        try:
+            r = requests.get(WFS_IGN, params=params, timeout=60)
+            r.raise_for_status()
+            entites = r.json().get("features", [])
+        except Exception as exc:  # couche absente ou format inattendu : on essaie la suivante
+            log.warning("Couche %s indisponible : %s", couche, exc)
+            continue
+        dalles = []
+        for f in entites:
+            p = f.get("properties", {})
+            url = next((v for k, v in p.items() if isinstance(v, str) and v.startswith("http") and "laz" in v.lower()), None)
+            if url:
+                dalles.append({"nom": p.get("name") or p.get("nom") or url.rsplit("/", 1)[-1], "url": url})
+        if dalles:
+            log.info("%d dalle(s) LiDAR HD trouvée(s) via %s", len(dalles), couche)
+            for d in dalles:
+                log.info("  %s", d["nom"])
+            return dalles
+        log.warning("Couche %s : aucune URL de dalle dans les attributs %s", couche,
+                    list(entites[0]["properties"]) if entites else "(aucune entité)")
+    raise RuntimeError("Impossible de lister les dalles LiDAR HD")
+
+
+def charger_points(dalles: list[dict]) -> dict[str, np.ndarray]:
+    """Lit uniquement les points de la zone dans chaque dalle COPC (lecture partielle par requêtes HTTP)."""
+    cache = CACHE / "points.npz"
+    if cache.exists():
+        log.info("Nuage de points lu depuis le cache")
+        return dict(np.load(cache))
+
+    bornes = laspy.copc.Bounds(
+        mins=np.array([ZONE["xmin"], ZONE["ymin"]], dtype=float),
+        maxs=np.array([ZONE["xmax"], ZONE["ymax"]], dtype=float),
+    )
+    morceaux = []
+    for d in dalles:
+        log.info("Lecture COPC de %s", d["nom"])
+        with laspy.CopcReader.open(d["url"]) as lecteur:
+            pts = lecteur.query(bounds=bornes)
+        if len(pts) == 0:
+            continue
+        morceaux.append({
+            "x": np.asarray(pts.x, dtype=np.float64),
+            "y": np.asarray(pts.y, dtype=np.float64),
+            "z": np.asarray(pts.z, dtype=np.float32),
+            "classe": np.asarray(pts.classification, dtype=np.uint8),
+            "intensite": np.asarray(pts.intensity, dtype=np.uint16),
+            "retour": np.asarray(pts.return_number, dtype=np.uint8),
+            "nb_retours": np.asarray(pts.number_of_returns, dtype=np.uint8),
+        })
+        log.info("  %d points dans la zone", len(pts))
+    if not morceaux:
+        raise RuntimeError("Aucun point LiDAR dans la zone")
+    points = {k: np.concatenate([m[k] for m in morceaux]) for k in morceaux[0]}
+    CACHE.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(cache, **points)
+    log.info("Total : %d points", len(points["x"]))
+    return points
+
+
+def charger_arbres_paris() -> dict:
+    """Arbres de l'inventaire de la Ville de Paris situés dans la zone (GeoJSON WGS84)."""
+    cache = CACHE / "arbres_paris.geojson"
+    if cache.exists():
+        return json.loads(cache.read_text(encoding="utf-8"))
+    lon0, lat0 = L93_VERS_WGS84.transform(ZONE["xmin"], ZONE["ymin"])
+    lon1, lat1 = L93_VERS_WGS84.transform(ZONE["xmax"], ZONE["ymax"])
+    params = {"where": f"in_bbox(geo_point_2d, {lat0}, {lon0}, {lat1}, {lon1})"}
+    r = requests.get(API_ARBRES, params=params, timeout=120)
+    r.raise_for_status()
+    geojson = r.json()
+    log.info("%d arbres de l'inventaire parisien dans la zone", len(geojson.get("features", [])))
+    CACHE.mkdir(parents=True, exist_ok=True)
+    cache.write_text(json.dumps(geojson), encoding="utf-8")
+    return geojson
