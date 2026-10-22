@@ -139,9 +139,17 @@ def main():
     }
     (SORTIE / "metriques.json").write_text(json.dumps(metriques, ensure_ascii=False, indent=1), encoding="utf-8")
     log.info("Terminé en %d s : %s", time.time() - t0, json.dumps(metriques["zone"], ensure_ascii=False))
-    print(json.dumps({k: metriques[k] for k in ("genre", "circonference", "hauteur") if k in metriques},
-                     ensure_ascii=False, indent=1))
-
+    g = metriques["genre"]
+    resume = {
+        "zone": {k: metriques["zone"][k] for k in ("nb_points_lidar", "nb_arbres_detectes", "nb_arbres_inventaire",
+                                                   "nb_apparies", "taux_canopee", "hauteur_moyenne")},
+        "genre": {k: g[k] for k in ("n_echantillons", "precision_globale", "precision_hasard", "f1_macro",
+                                    "effectifs", "f1_par_classe")},
+        "circonference": metriques["circonference"],
+        "hauteur": metriques.get("hauteur"),
+        "importance": metriques["importance_variables"][:6],
+    }
+    print("RESUME " + json.dumps(resume, ensure_ascii=False))
 
 if __name__ == "__main__":
     main()
