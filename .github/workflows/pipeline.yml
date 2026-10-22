@@ -23,13 +23,15 @@ jobs:
           path: cache
           key: donnees-${{ hashFiles('pipeline/config.py') }}
       - name: Traitement LiDAR et apprentissage
-        run: python pipeline/run.py | tee pipeline.log
+        shell: bash
+        run: python pipeline/run.py 2>&1 | tee pipeline.log
       - name: Résumé
         if: always()
+        shell: bash
         run: |
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          tail -n 80 pipeline.log >> "$GITHUB_STEP_SUMMARY" || true
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          { echo '```'; tail -n 80 pipeline.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY" || true
+          # le journal est aussi publié en annotation, lisible depuis l'API GitHub
+          python -c "import sys;t=open('pipeline.log',encoding='utf-8').read()[-6000:];print('::notice title=Journal du pipeline::'+t.replace('%','%25').replace('\\r','').replace('\\n','%0A'))"
       - uses: actions/upload-artifact@v4
         with:
           name: donnees-web
