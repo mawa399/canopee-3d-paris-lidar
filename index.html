@@ -56,6 +56,42 @@
             </calcite-label>
           </calcite-block>
 
+          <calcite-block heading="Chaîne ArcGIS Pro · ArcGIS Online" icon-start="globe" id="bloc-arcgis">
+            <p class="aide">
+              Le même LiDAR traité une seconde fois dans <b>ArcGIS Pro</b> (Spatial Analyst, 3D Analyst, forêt aléatoire) et publié sur
+              <b>ArcGIS Online</b> : couche d'entités des arbres et couche de scène du nuage de points, lues ici en direct.
+            </p>
+            <calcite-label layout="inline-space-between">
+              Nuage de points LiDAR complet
+              <calcite-switch id="sw-nuage-agol"></calcite-switch>
+            </calcite-label>
+            <calcite-segmented-control id="rendu-nuage" width="full" scale="s" hidden>
+              <calcite-segmented-control-item value="rgb" checked>Couleurs réelles</calcite-segmented-control-item>
+              <calcite-segmented-control-item value="hauteur">Altitude</calcite-segmented-control-item>
+              <calcite-segmented-control-item value="classe">Classe</calcite-segmented-control-item>
+            </calcite-segmented-control>
+            <calcite-label layout="inline-space-between">
+              Arbres détectés par ArcGIS Pro
+              <calcite-switch id="sw-arbres-agol"></calcite-switch>
+            </calcite-label>
+            <table class="comparaison">
+              <tr><th></th><th>Python</th><th>ArcGIS Pro</th></tr>
+              <tr><td>Arbres détectés</td><td id="c-py-arbres">–</td><td>5 279</td></tr>
+              <tr><td>Appariés à l'inventaire</td><td id="c-py-apparies">–</td><td>2 320</td></tr>
+              <tr><td>Classes d'essence</td><td id="c-py-classes">–</td><td>4 groupes</td></tr>
+              <tr><td>Bonnes réponses (validation)</td><td id="c-py-precision">–</td><td>59 %</td></tr>
+              <tr><td>Circonférence, R²</td><td id="c-py-r2">–</td><td>0,45</td></tr>
+            </table>
+            <p class="aide note">
+              Les deux chaînes ne prédisent pas la même chose : 10 genres côté Python, 4 groupes (platane, marronnier, conifère, autre feuillu) côté
+              ArcGIS Pro. Leurs scores ne se comparent donc pas directement ; la validation Python, par blocs spatiaux de 150 m, est la plus exigeante.
+            </p>
+            <div class="liens-agol">
+              <calcite-link href="https://www.arcgis.com/home/item.html?id=1171618aa47b4fd998f0c52840f322d2" target="_blank" icon-start="layer">Couche des arbres</calcite-link>
+              <calcite-link href="https://www.arcgis.com/home/item.html?id=35e1fc2f601b4f97b3319d09976f29b9" target="_blank" icon-start="layer-3d">Couche du nuage de points</calcite-link>
+            </div>
+          </calcite-block>
+
           <calcite-block heading="Filtrer" expanded icon-start="filter">
             <calcite-label>
               Hauteur (m)

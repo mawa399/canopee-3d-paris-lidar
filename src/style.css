@@ -253,3 +253,36 @@ calcite-label {
     display: none;
   }
 }
+
+/* Chaîne ArcGIS Pro · ArcGIS Online */
+#rendu-nuage {
+  margin: 0.25rem 0 0.75rem;
+}
+.comparaison {
+  width: 100%;
+  margin: 0.75rem 0 0.5rem;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  color: var(--calcite-color-text-2);
+}
+.comparaison th,
+.comparaison td {
+  padding: 0.3rem 0.25rem;
+  border-bottom: 1px solid var(--calcite-color-border-3);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.comparaison th:first-child,
+.comparaison td:first-child {
+  text-align: left;
+}
+.comparaison th {
+  color: var(--calcite-color-text-1);
+  font-weight: 600;
+}
+.liens-agol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+}

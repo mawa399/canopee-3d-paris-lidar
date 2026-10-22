@@ -59,6 +59,34 @@ LiDAR HD IGN (WFS → dalles COPC)        Inventaire « Les arbres » (API Open 
 
 Le pipeline tourne dans **GitHub Actions** à chaque mise à jour : il télécharge les données, entraîne les modèles, construit l'application et la publie sur GitHub Pages.
 
+## Seconde chaîne : ArcGIS Pro et ArcGIS Online
+
+Le même LiDAR a été traité une seconde fois avec **ArcGIS Pro 3.7** (Spatial Analyst, 3D Analyst), et les résultats sont publiés sur **ArcGIS Online**, d'où l'application les lit en direct (bloc « Chaîne ArcGIS Pro · ArcGIS Online »).
+
+| Étape | Outils ArcGIS Pro |
+|---|---|
+| Nuage de points | Jeu de données LAS (COPC), filtre par classes IGN |
+| Hauteur de la végétation | LAS Dataset To Raster (classes 4-5, max, 0,5 m) moins le MNT IGN |
+| Cimes et houppiers | Focal Statistics (maxima locaux, rayon 3 m), Region Group, Flow Direction et Watershed sur la canopée inversée |
+| Indicateurs | Zonal Statistics As Table, LAS Point Statistics As Raster (densité, part des retours dans la végétation), intensité moyenne, distance à la rue (BD TOPO) et à l'arbre voisin |
+| Machine learning | Classification et régression basées sur une forêt : groupe d'essence (4 groupes) et circonférence |
+| Publication | Couche d'entités hébergée (arbres) ; Create Point Cloud Scene Layer Package puis couche de scène hébergée (16,8 millions de points) |
+
+| Résultat (ArcGIS Pro) | Valeur |
+|---|---|
+| Arbres détectés | 5 279 |
+| Appariés à l'inventaire | 2 320 |
+| Groupe d'essence (4 groupes) — bonnes réponses en validation | 59 % |
+| Circonférence — R² en validation / erreur moyenne | 0,45 / 36 cm |
+| Hauteur LiDAR vs inventaire | écart médian 2,1 m, corrélation 0,67 |
+| Taux de canopée de la zone (végétation > 2 m) | 26 % |
+
+Les deux chaînes ne prédisent pas la même cible (10 genres côté Python, 4 groupes côté ArcGIS Pro) ni avec la même validation (blocs spatiaux côté Python, tirage aléatoire de 25 % côté ArcGIS Pro) : leurs scores ne se comparent donc pas directement.
+
+- Couche des arbres : [Arbres_Canopee3D_Paris](https://www.arcgis.com/home/item.html?id=1171618aa47b4fd998f0c52840f322d2)
+- Couche du nuage de points : [Nuage_Vegetation_ButtesChaumont](https://www.arcgis.com/home/item.html?id=35e1fc2f601b4f97b3319d09976f29b9)
+- Script arcpy reprenant toutes les étapes : [`pipeline_arcgis/canopee_arcgis.py`](pipeline_arcgis/canopee_arcgis.py)
+
 ## Côté SDK JavaScript
 
 - `SceneView` avec terrain et ombres portées
@@ -66,6 +94,8 @@ Le pipeline tourne dans **GitHub Actions** à chaque mise à jour : il télécha
 - Arbres en 3D : `WebStyleSymbol` (`EsriRealisticTreesStyle`) par genre, dimensionnés par variables visuelles (hauteur et diamètre du houppier)
 - Mode thématique et mode vérification : `UniqueValueRenderer` sur symboles 3D
 - Nuage de points d'un arbre : `FeatureLayer` côté client alimentée par `applyEdits`, couleur selon la hauteur
+- Nuage de points complet : `PointCloudLayer` hébergée sur ArcGIS Online, rendus couleurs réelles, altitude et classe
+- Arbres de la chaîne ArcGIS Pro : `FeatureLayer` hébergée, symboles 3D dimensionnés et fenêtre contextuelle
 - Interface : Calcite Design System
 
 ## Lancer en local

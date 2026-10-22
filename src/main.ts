@@ -24,6 +24,7 @@ import TileLayer from "@arcgis/core/layers/TileLayer";
 import ElevationLayer from "@arcgis/core/layers/ElevationLayer";
 import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import PointCloudLayer from "@arcgis/core/layers/PointCloudLayer";
 import Graphic from "@arcgis/core/Graphic";
 import Point from "@arcgis/core/geometry/Point";
 import WebStyleSymbol from "@arcgis/core/symbols/WebStyleSymbol";
@@ -173,6 +174,83 @@ const nuageLayer = new FeatureLayer({
   } as any,
 });
 
+// ---------------------------------------------------------------------------
+// Chaîne ArcGIS Pro : couches hébergées sur ArcGIS Online (publiques)
+// ---------------------------------------------------------------------------
+const AGOL_ARBRES = "https://services6.arcgis.com/XgSVk5L0bMP2HZ15/arcgis/rest/services/Arbres_Canopee3D_Paris/FeatureServer/0";
+const AGOL_NUAGE = "https://tiles.arcgis.com/tiles/XgSVk5L0bMP2HZ15/arcgis/rest/services/Nuage_Vegetation_ButtesChaumont_slpk/SceneServer";
+
+const rendusNuage: Record<string, any> = {
+  rgb: { type: "point-cloud-rgb", field: "RGB", pointsPerInch: 25 },
+  hauteur: {
+    type: "point-cloud-stretch",
+    field: "ELEVATION",
+    pointsPerInch: 25,
+    stops: [
+      { value: 45, color: "#3b2a1a" },
+      { value: 60, color: "#a6d96a" },
+      { value: 75, color: "#1a9850" },
+      { value: 95, color: "#00441b" },
+    ],
+  },
+  classe: {
+    type: "point-cloud-unique-value",
+    field: "CLASS_CODE",
+    pointsPerInch: 25,
+    colorUniqueValueInfos: [
+      { values: ["2"], label: "Sol", color: "#b08a5a" },
+      { values: ["3"], label: "Végétation basse", color: "#c7e9a0" },
+      { values: ["4"], label: "Végétation moyenne", color: "#5fbf7a" },
+      { values: ["5"], label: "Végétation haute", color: "#1b6b3a" },
+    ],
+  },
+};
+
+const nuageAgol = new PointCloudLayer({
+  url: AGOL_NUAGE,
+  title: "Nuage de points LiDAR HD (ArcGIS Online)",
+  visible: false,
+  renderer: rendusNuage.rgb,
+});
+
+const arbresAgol = new FeatureLayer({
+  url: AGOL_ARBRES,
+  title: "Arbres détectés par ArcGIS Pro (ArcGIS Online)",
+  visible: false,
+  outFields: ["*"],
+  elevationInfo: { mode: "on-the-ground" },
+  renderer: {
+    type: "simple",
+    symbol: {
+      type: "point-3d",
+      symbolLayers: [{ type: "object", resource: { primitive: "cone" }, material: { color: "#f2b84b" }, anchor: "bottom" }],
+    },
+    visualVariables: [
+      { type: "size", axis: "height", field: "hauteur_m", valueUnit: "meters" },
+      { type: "size", axis: "width-and-depth", field: "diam_houppier_m", valueUnit: "meters" },
+    ],
+  } as any,
+  popupEnabled: true,
+  popupTemplate: {
+    title: "Arbre détecté par ArcGIS Pro",
+    content: [
+      {
+        type: "fields",
+        fieldInfos: [
+          { fieldName: "hauteur_m", label: "Hauteur LiDAR (m)" },
+          { fieldName: "diam_houppier_m", label: "Diamètre du houppier (m)" },
+          { fieldName: "groupe_predit", label: "Groupe d'essence prédit" },
+          { fieldName: "proba_groupe", label: "Probabilité" },
+          { fieldName: "circ_estimee_cm", label: "Circonférence estimée (cm)" },
+          { fieldName: "nom_francais", label: "Inventaire : nom" },
+          { fieldName: "circ_inventaire_cm", label: "Inventaire : circonférence (cm)" },
+          { fieldName: "hauteur_inventaire_m", label: "Inventaire : hauteur (m)" },
+        ],
+      },
+    ],
+  } as any,
+});
+
 const carte = new EsriMap({
   basemap: new Basemap({
     baseLayers: [new TileLayer({ url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer" })],
@@ -180,7 +258,7 @@ const carte = new EsriMap({
   ground: new Ground({
     layers: [new ElevationLayer({ url: "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer" })],
   }),
-  layers: [houppiers, arbres, nuageLayer],
+  layers: [nuageAgol, houppiers, arbres, arbresAgol, nuageLayer],
 });
 
 const [lon0, lat0, lon1, lat1] = metriques.zone.emprise_wgs84;
@@ -260,6 +338,25 @@ $("mode").addEventListener("calciteSegmentedControlChange", (e: any) => {
   $("legende-verif").hidden = e.target.value !== "verif";
 });
 appliquerFiltres();
+
+// Chaîne ArcGIS : interrupteurs et tableau de comparaison
+$("sw-nuage-agol").addEventListener("calciteSwitchChange", (e: any) => {
+  nuageAgol.visible = e.target.checked;
+  $("rendu-nuage").hidden = !e.target.checked;
+});
+$("rendu-nuage").addEventListener("calciteSegmentedControlChange", (e: any) => {
+  nuageAgol.renderer = rendusNuage[e.target.value];
+});
+$("sw-arbres-agol").addEventListener("calciteSwitchChange", (e: any) => {
+  arbresAgol.visible = e.target.checked;
+  // la fiche détaillée reste celle des arbres Python ; les arbres ArcGIS ont leur propre fenêtre contextuelle
+  vue.popupEnabled = e.target.checked;
+});
+$("c-py-arbres").textContent = z.nb_arbres_detectes.toLocaleString("fr-FR");
+$("c-py-apparies").textContent = z.nb_apparies.toLocaleString("fr-FR");
+$("c-py-classes").textContent = `${classes.length} genres`;
+$("c-py-precision").textContent = pct(metriques.genre.precision_globale);
+$("c-py-r2").textContent = nf.format(metriques.circonference.r2);
 
 // ---------------------------------------------------------------------------
 // Panneau : le modèle
